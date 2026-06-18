@@ -22,7 +22,10 @@ import { useMutation, useQuery } from 'react-query';
 import { selectTierZeroAssetGroupId } from 'src/ducks/assetgroups/reducer';
 import { useAppSelector } from 'src/store';
 
-const AssetGroupMenuItem: FC<{ assetGroupId: number; assetGroupName: string }> = ({ assetGroupId, assetGroupName }) => {
+const AssetGroupMenuItem: FC<{ assetGroupId?: number; assetGroupName: string }> = ({
+    assetGroupId,
+    assetGroupName,
+}) => {
     const { addNotification } = useNotifications();
     const { refetch } = useExploreGraph();
 
@@ -35,7 +38,7 @@ const AssetGroupMenuItem: FC<{ assetGroupId: number; assetGroupName: string }> =
 
     const mutation = useMutation({
         mutationFn: ({ nodeId, action }: { nodeId: string; action: 'add' | 'remove' }) => {
-            return apiClient.updateAssetGroupSelector(assetGroupId, [
+            return apiClient.updateAssetGroupSelector(assetGroupId!, [
                 {
                     selector_name: nodeId,
                     sid: nodeId,
@@ -53,14 +56,19 @@ const AssetGroupMenuItem: FC<{ assetGroupId: number; assetGroupName: string }> =
         },
     });
 
-    const { data: assetGroupMembers } = useQuery(['listAssetGroupMembers', assetGroupId], () =>
-        apiClient
-            .listAssetGroupMembers(assetGroupId, undefined, {
-                params: {
-                    object_id: `object_id=eq:${(selectedItemQuery.data as NodeResponse)?.objectId}`,
-                },
-            })
-            .then((res) => res.data.data?.members)
+    const { data: assetGroupMembers } = useQuery(
+        ['listAssetGroupMembers', assetGroupId],
+        () =>
+            apiClient
+                .listAssetGroupMembers(assetGroupId!, undefined, {
+                    params: {
+                        object_id: `object_id=eq:${(selectedItemQuery.data as NodeResponse)?.objectId}`,
+                    },
+                })
+                .then((res) => res.data.data?.members),
+        {
+            enabled: assetGroupId !== undefined,
+        }
     );
 
     const handleAddToAssetGroup = () => {
@@ -83,6 +91,10 @@ const AssetGroupMenuItem: FC<{ assetGroupId: number; assetGroupName: string }> =
     const handleCloseConfirmation = () => {
         setOpen(false);
     };
+
+    if (assetGroupId === undefined) {
+        return null;
+    }
 
     // error state, data didn't load
     if (!assetGroupMembers) {

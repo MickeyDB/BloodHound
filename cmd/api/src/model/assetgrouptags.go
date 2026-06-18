@@ -48,6 +48,7 @@ const (
 	AssetGroupTagTypeTier  AssetGroupTagType = 1
 	AssetGroupTagTypeLabel AssetGroupTagType = 2
 	AssetGroupTagTypeOwned AssetGroupTagType = 3
+	AssetGroupTagTypeDecoy AssetGroupTagType = 4
 )
 
 type AssetGroupCertification int
@@ -175,6 +176,8 @@ func (s AssetGroupTag) ToType() string {
 		return "label"
 	case AssetGroupTagTypeOwned:
 		return "owned"
+	case AssetGroupTagTypeDecoy:
+		return "decoy"
 	default:
 		return "unknown"
 	}
@@ -187,6 +190,8 @@ func (s AssetGroupTag) GetExpansionMethod() AssetGroupExpansionMethod {
 	case AssetGroupTagTypeLabel:
 		return AssetGroupExpansionMethodChildren
 	case AssetGroupTagTypeOwned:
+		return AssetGroupExpansionMethodNone
+	case AssetGroupTagTypeDecoy:
 		return AssetGroupExpansionMethodNone
 	default:
 		return AssetGroupExpansionMethodNone

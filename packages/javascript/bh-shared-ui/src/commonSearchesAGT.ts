@@ -14,7 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import { TAG_OWNED_AGT, TAG_TIER_ZERO_AGT } from './constants';
+import { TAG_DECOY_AGT, TAG_OWNED_AGT, TAG_TIER_ZERO_AGT } from './constants';
 import { ActiveDirectoryPathfindingEdges, AzurePathfindingEdges } from './graphSchema';
 import { CommonSearchType } from './types';
 
@@ -23,6 +23,7 @@ const categoryAzure = 'Azure';
 
 const azureTransitEdgeTypes = AzurePathfindingEdges().join('|');
 const adTransitEdgeTypes = ActiveDirectoryPathfindingEdges().join('|');
+const excludeDecoyNodesAGT = `none(n IN nodes(p) WHERE n:${TAG_DECOY_AGT})`;
 
 const highPrivilegedRoleDisplayNameRegex =
     '^(Global Administrator|User Administrator|Cloud Application Administrator|Authentication Policy Administrator|Exchange Administrator|Helpdesk Administrator|Privileged Authentication Administrator|Privileged Role Administrator).*$';
@@ -90,7 +91,7 @@ export const CommonSearches: CommonSearchType[] = [
             {
                 name: 'Paths from Domain Users to Tier Zero / High Value targets',
                 description: '',
-                query: `MATCH p=shortestPath((s:Group)-[:${adTransitEdgeTypes}*1..]->(t:${TAG_TIER_ZERO_AGT}))\nWHERE s.objectid ENDS WITH '-513' AND s<>t\nRETURN p\nLIMIT 1000`,
+                query: `MATCH p=shortestPath((s:Group)-[:${adTransitEdgeTypes}*1..]->(t:${TAG_TIER_ZERO_AGT}))\nWHERE s.objectid ENDS WITH '-513' AND s<>t\nAND ${excludeDecoyNodesAGT}\nRETURN p\nLIMIT 1000`,
             },
             {
                 name: 'Workstations where Domain Users can RDP',
@@ -147,37 +148,37 @@ export const CommonSearches: CommonSearchType[] = [
             {
                 name: 'Shortest paths to systems trusted for unconstrained delegation',
                 description: '',
-                query: `MATCH p=shortestPath((s)-[:${adTransitEdgeTypes}*1..]->(t:Computer))\nWHERE t.unconstraineddelegation = true AND s<>t\nRETURN p\nLIMIT 1000`,
+                query: `MATCH p=shortestPath((s)-[:${adTransitEdgeTypes}*1..]->(t:Computer))\nWHERE t.unconstraineddelegation = true AND s<>t\nAND ${excludeDecoyNodesAGT}\nRETURN p\nLIMIT 1000`,
             },
             {
                 name: 'Shortest paths to Domain Admins from Kerberoastable users',
                 description: '',
-                query: `MATCH p=shortestPath((s:User)-[:${adTransitEdgeTypes}*1..]->(t:Group))\nWHERE s.hasspn=true\nAND s.enabled = true\nAND NOT s.objectid ENDS WITH '-502'\nAND NOT COALESCE(s.gmsa, false) = true\nAND NOT COALESCE(s.msa, false) = true\nAND t.objectid ENDS WITH '-512'\nRETURN p\nLIMIT 1000`,
+                query: `MATCH p=shortestPath((s:User)-[:${adTransitEdgeTypes}*1..]->(t:Group))\nWHERE s.hasspn=true\nAND s.enabled = true\nAND NOT s.objectid ENDS WITH '-502'\nAND NOT COALESCE(s.gmsa, false) = true\nAND NOT COALESCE(s.msa, false) = true\nAND t.objectid ENDS WITH '-512'\nAND ${excludeDecoyNodesAGT}\nRETURN p\nLIMIT 1000`,
             },
             {
                 name: 'Shortest paths to Tier Zero / High Value targets',
                 description: '',
-                query: `MATCH p=shortestPath((s)-[:${adTransitEdgeTypes}*1..]->(t:${TAG_TIER_ZERO_AGT}))\nWHERE s<>t\nRETURN p\nLIMIT 1000`,
+                query: `MATCH p=shortestPath((s)-[:${adTransitEdgeTypes}*1..]->(t:${TAG_TIER_ZERO_AGT}))\nWHERE s<>t\nAND ${excludeDecoyNodesAGT}\nRETURN p\nLIMIT 1000`,
             },
             {
                 name: 'Shortest paths from Domain Users to Tier Zero / High Value targets',
                 description: '',
-                query: `MATCH p=shortestPath((s:Group)-[:${adTransitEdgeTypes}*1..]->(t:${TAG_TIER_ZERO_AGT}))\nWHERE s.objectid ENDS WITH '-513' AND s<>t\nRETURN p\nLIMIT 1000`,
+                query: `MATCH p=shortestPath((s:Group)-[:${adTransitEdgeTypes}*1..]->(t:${TAG_TIER_ZERO_AGT}))\nWHERE s.objectid ENDS WITH '-513' AND s<>t\nAND ${excludeDecoyNodesAGT}\nRETURN p\nLIMIT 1000`,
             },
             {
                 name: 'Shortest paths to Domain Admins',
                 description: '',
-                query: `MATCH p=shortestPath((t:Group)<-[:${adTransitEdgeTypes}*1..]-(s:Base))\nWHERE t.objectid ENDS WITH '-512' AND s<>t\nRETURN p\nLIMIT 1000`,
+                query: `MATCH p=shortestPath((t:Group)<-[:${adTransitEdgeTypes}*1..]-(s:Base))\nWHERE t.objectid ENDS WITH '-512' AND s<>t\nAND ${excludeDecoyNodesAGT}\nRETURN p\nLIMIT 1000`,
             },
             {
                 name: 'Shortest paths from Owned objects to Tier Zero',
                 description: '',
-                query: `// MANY TO MANY SHORTEST PATH QUERIES USE EXCESSIVE SYSTEM RESOURCES AND TYPICALLY WILL NOT COMPLETE\n// UNCOMMENT THE FOLLOWING LINES BY REMOVING THE DOUBLE FORWARD SLASHES AT YOUR OWN RISK\n// MATCH p=shortestPath((s:${TAG_OWNED_AGT})-[:${adTransitEdgeTypes}*1..]->(t:${TAG_TIER_ZERO_AGT}))\n// WHERE s<>t\n// RETURN p\n// LIMIT 1000`,
+                query: `// MANY TO MANY SHORTEST PATH QUERIES USE EXCESSIVE SYSTEM RESOURCES AND TYPICALLY WILL NOT COMPLETE\n// UNCOMMENT THE FOLLOWING LINES BY REMOVING THE DOUBLE FORWARD SLASHES AT YOUR OWN RISK\n// MATCH p=shortestPath((s:${TAG_OWNED_AGT})-[:${adTransitEdgeTypes}*1..]->(t:${TAG_TIER_ZERO_AGT}))\n// WHERE s<>t\n// AND ${excludeDecoyNodesAGT}\n// RETURN p\n// LIMIT 1000`,
             },
             {
                 name: 'Shortest paths from Owned objects',
                 description: '',
-                query: `MATCH p=shortestPath((s:Base)-[:${adTransitEdgeTypes}*1..]->(t:Base))\nWHERE (s:${TAG_OWNED_AGT})\nAND s<>t\nRETURN p\nLIMIT 1000`,
+                query: `MATCH p=shortestPath((s:Base)-[:${adTransitEdgeTypes}*1..]->(t:Base))\nWHERE (s:${TAG_OWNED_AGT})\nAND s<>t\nAND ${excludeDecoyNodesAGT}\nRETURN p\nLIMIT 1000`,
             },
         ],
     },

@@ -23,8 +23,10 @@ import {
 } from 'js-client-library';
 import { FC } from 'react';
 import {
+    getIsDecoyTag,
     getIsOwnedTag,
     getIsTierZeroTag,
+    isDecoyObject,
     isNode,
     isOwnedObject,
     isTierZero,
@@ -108,6 +110,13 @@ const ContextMenu: FC<{
                 isCurrentMemberFn={isOwnedObject}
                 removeNodePathFn={(tag: AssetGroupTag) => tagDetailsLink(tag.id, 'labels')}
                 tagIdentifierFn={getIsOwnedTag}
+            />
+
+            <AssetGroupMenuItem
+                addNodePayload={ownedPayload}
+                isCurrentMemberFn={isDecoyObject}
+                removeNodePathFn={(tag: AssetGroupTag) => tagDetailsLink(tag.id, 'labels')}
+                tagIdentifierFn={getIsDecoyTag}
             />
 
             <CopyMenuItem />

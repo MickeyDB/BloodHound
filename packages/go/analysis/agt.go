@@ -900,7 +900,7 @@ func tagAssetGroupNodes(ctx context.Context, db database.Database, graphDb graph
 			switch tag.Type {
 			case model.AssetGroupTagTypeTier:
 				tiersOrdered = append(tiersOrdered, tag)
-			case model.AssetGroupTagTypeLabel, model.AssetGroupTagTypeOwned:
+			case model.AssetGroupTagTypeLabel, model.AssetGroupTagTypeOwned, model.AssetGroupTagTypeDecoy:
 				labelsOrOwned = append(labelsOrOwned, tag)
 			default:
 				slog.WarnContext(
